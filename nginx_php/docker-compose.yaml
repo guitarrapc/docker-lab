@@ -6,7 +6,6 @@ services:
     image: nginx:1.17-alpine
     ports:
       - 8000:80
-      - 443:443
     volumes:
       - ./app:/var/www/html
       - ./nginx:/etc/nginx/conf.d
@@ -17,8 +16,6 @@ services:
       
   app:
     image: php:7.2-fpm
-    ports:
-      - 8001:9000
     volumes:
       - ./app:/var/www/html
       - ./php/php.ini:/usr/local/etc/php/php.ini
