@@ -1,0 +1,33 @@
+version: "3.7"
+
+services:
+
+  web:
+    image: nginx:1.17-alpine
+    ports:
+      - 8000:80
+    volumes:
+      - ./app:/var/www/html
+      - ./nginx:/etc/nginx/conf.d
+    depends_on: 
+      - app
+    links:
+      - app
+      
+  app:
+    build:
+      context: .
+      dockerfile: ./app/Dockerfile
+    volumes:
+      - ./app:/var/www/html
+      - ./php/php.ini:/usr/local/etc/php/php.ini
+    links:
+      - redis
+
+  redis:
+    image: redis:latest
+    ports:
+      - 6379:6379
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - ./.redis:/data
