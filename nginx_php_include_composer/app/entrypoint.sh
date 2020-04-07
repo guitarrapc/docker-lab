@@ -1,9 +1,9 @@
-#!/bin/bash
+#!/bin/sh
 
 # swap host vendor with image vendor (image vendor is right vendor dir)
 if [[ -d "vendor" ]]
 then
-  mv vendor/ /tmp/_temp
+  rm -rf vendor/*
 fi
 cp -rf /tmp/vendor .
 

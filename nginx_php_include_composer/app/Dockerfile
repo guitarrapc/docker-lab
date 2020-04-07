@@ -1,7 +1,7 @@
-FROM php:7.4-fpm
+FROM php:7.4-fpm-alpine
 
-RUN apt-get update \
-  && apt-get install -y git libzip-dev unzip \
+RUN apk update \
+  && apk add git libzip-dev unzip \
   && docker-php-ext-install zip
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
