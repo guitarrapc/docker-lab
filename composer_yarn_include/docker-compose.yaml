@@ -1,0 +1,10 @@
+version: "3.7"
+
+services:
+
+  composer:
+    build:
+      context: .
+      dockerfile: ./app/Dockerfile
+    volumes:
+      - ./app:/app
