@@ -1,14 +1,13 @@
+# Community edition cannot persist data. If you need to persist data, please consider upgrading to the Pro edition.
+
 # ref: https://github.com/localstack/localstack/blob/master/docker-compose.yml
+# * ENV    https://docs.localstack.cloud/references/configuration/
+# * VOLUME https://docs.localstack.cloud/references/filesystem/
 services:
   localstack:
     image: localstack/localstack:1.4.0
     ports:
       - "127.0.0.1:4566:4566"            # LocalStack Gateway
       - "127.0.0.1:4510-4559:4510-4559"  # external services port range
-    # environment:
-    #   - DEBUG=${DEBUG-}
-    #   - LAMBDA_EXECUTOR=${LAMBDA_EXECUTOR-}
-    #   - DOCKER_HOST=unix:///var/run/docker.sock
-    # volumes:
-    #   - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
-    #   - "/var/run/docker.sock:/var/run/docker.sock"
+    volumes:
+      - "./docker-entrypoint-initaws.d/:/docker-entrypoint-initaws.d"
