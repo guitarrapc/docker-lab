@@ -4,42 +4,84 @@ set -e
 export QUEUE_NAME=foo-queue
 export AWS_PROFILE=localstack
 
-# create queue
+# 1) create queue
+echo "------------"
+echo "Create SQS queue"
 aws --endpoint-url=http://localhost:4566 sqs create-queue --queue-name "${QUEUE_NAME}"
 
-# list queues
+# 2) list queues
 echo "------------"
 echo "List SQS queues"
 aws --endpoint-url=http://localhost:4566 sqs list-queues
 
-# send messages
+# 3) get queue url
+echo "------------"
+echo "List SQS queues"
+queue=$(aws --endpoint-url=http://localhost:4566 sqs get-queue-url --queue-name "${QUEUE_NAME}")
+echo "${queue}"
+queue_url=$(echo "${queue}" | jq -r '.QueueUrl')
+
+# 4) set queue attributes
+echo "------------"
+echo "Set SQS queue attributes, VisibilityTimeout=10"
+aws --endpoint-url=http://localhost:4566 sqs set-queue-attributes --queue-url "${queue_url}" --attributes VisibilityTimeout=10
+
+# 5) get queue attributes
+echo "------------"
+echo "Get SQS queue attributes"
+aws --endpoint-url=http://localhost:4566 sqs get-queue-attributes --queue-url "${queue_url}" --attribute-names \
+  Policy \
+  VisibilityTimeout \
+  MaximumMessageSize \
+  MessageRetentionPeriod \
+  ApproximateNumberOfMessages \
+  ApproximateNumberOfMessagesNotVisible \
+  CreatedTimestamp \
+  LastModifiedTimestamp \
+  QueueArn \
+  ApproximateNumberOfMessagesDelayed \
+  DelaySeconds \
+  ReceiveMessageWaitTimeSeconds \
+  RedrivePolicy
+
+# 6) send messages
 echo "------------"
 echo "Sending messages to SQS"
-aws --endpoint-url=http://localhost:4566 sqs send-message --queue-url "http://localhost:4566/000000000000/${QUEUE_NAME}" --message-body "{""name"": ""dummy""}"
-aws --endpoint-url=http://localhost:4566 sqs send-message --queue-url "http://localhost:4566/000000000000/${QUEUE_NAME}" --message-body "{""name"": ""dummy2""}"
+aws --endpoint-url=http://localhost:4566 sqs send-message --queue-url "${queue_url}" --message-body "{""name"": ""dummy""}"
+aws --endpoint-url=http://localhost:4566 sqs send-message --queue-url "${queue_url}" --message-body "{""name"": ""dummy2""}"
 
-# get message
+# 7) get message
 echo "------------"
 echo "Get message from SQS"
-recieve1=$(aws --endpoint-url=http://localhost:4566 sqs receive-message --queue-url "http://localhost:4566/000000000000/${QUEUE_NAME}")
+recieve1=$(aws --endpoint-url=http://localhost:4566 sqs receive-message --queue-url "${queue_url}")
 receipt1=$(echo $recieve1 | jq -r '.Messages[].ReceiptHandle')
 body1=$(echo $recieve1 | jq -r '.Messages[].Body')
 echo "${recieve1}"
 echo "1st received body '${body1}'"
 
-recieve2=$(aws --endpoint-url=http://localhost:4566 sqs receive-message --queue-url "http://localhost:4566/000000000000/${QUEUE_NAME}")
+recieve2=$(aws --endpoint-url=http://localhost:4566 sqs receive-message --queue-url "${queue_url}")
 receipt2=$(echo "$recieve2" | jq -r '.Messages[].ReceiptHandle')
 body2=$(echo "$recieve2" | jq -r '.Messages[].Body')
 echo "${recieve2}"
 echo "2nd received body '${body2}'"
 
-# get message (must be empty)
+# 8) change message visibility
+echo "------------"
+echo "Change message visibility to 60s"
+aws --endpoint-url=http://localhost:4566 sqs change-message-visibility --queue-url "${queue_url}" --receipt-handle "${receipt1}" --visibility-timeout 60
+
+# 9) get message (must be empty)
 echo "------------"
 echo "Get message must be empty as of visible timeout"
-aws --endpoint-url=http://localhost:4566 sqs receive-message --queue-url "http://localhost:4566/000000000000/${QUEUE_NAME}"
+aws --endpoint-url=http://localhost:4566 sqs receive-message --queue-url "${queue_url}"
 
-# delete message
+# 10) delete message
 echo "------------"
 echo "Delete messages from SQS"
-aws --endpoint-url=http://localhost:4566 sqs delete-message --queue-url "http://localhost:4566/000000000000/${QUEUE_NAME}" --receipt-handle "${receipt1}"
-aws --endpoint-url=http://localhost:4566 sqs delete-message --queue-url "http://localhost:4566/000000000000/${QUEUE_NAME}" --receipt-handle "${receipt2}"
+aws --endpoint-url=http://localhost:4566 sqs delete-message --queue-url "${queue_url}" --receipt-handle "${receipt1}"
+aws --endpoint-url=http://localhost:4566 sqs delete-message --queue-url "${queue_url}" --receipt-handle "${receipt2}"
+
+# 11) purge message
+echo "------------"
+echo "Purge messages from SQS"
+aws --endpoint-url=http://localhost:4566 sqs purge-queue --queue-url "${queue_url}"
