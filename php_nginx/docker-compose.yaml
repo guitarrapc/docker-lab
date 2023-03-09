@@ -9,11 +9,11 @@ services:
     volumes:
       - ./app:/var/www/html
       - ./nginx:/etc/nginx/conf.d
-    depends_on: 
+    depends_on:
       - app
     links:
       - app
-      
+
   app:
     image: php:7.2-fpm
     volumes:
