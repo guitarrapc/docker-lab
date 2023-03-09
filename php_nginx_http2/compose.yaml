@@ -1,28 +1,30 @@
-version: "3.7"
-
 services:
-
   web:
-    image: nginx:1.17-alpine
+    build: ./nginx
     ports:
       - 8000:80
+      - 443:443
     volumes:
       - ./app:/var/www/html
       - ./nginx:/etc/nginx/conf.d
-    depends_on: 
+    depends_on:
       - app
     links:
       - app
-      
+
   app:
-    build:
-      context: .
-      dockerfile: ./app/Dockerfile
+    image: php:7.2-fpm
     volumes:
       - ./app:/var/www/html
       - ./php/php.ini:/usr/local/etc/php/php.ini
     links:
       - redis
+
+  composer:
+    image: composer:1.10.1
+    command: ["install"]
+    volumes:
+      - ./app:/app
 
   redis:
     image: redis:latest

@@ -1,7 +1,4 @@
-version: "3.7"
-
 services:
-
   web:
     image: nginx:1.17-alpine
     ports:
@@ -15,16 +12,14 @@ services:
       - app
 
   app:
-    image: php:7.2-fpm
+    build:
+      context: .
+      dockerfile: ./app/Dockerfile
     volumes:
       - ./app:/var/www/html
       - ./php/php.ini:/usr/local/etc/php/php.ini
-
-  composer:
-    image: composer:1.10.1
-    command: ["install"]
-    volumes:
-      - ./app:/app
+    links:
+      - redis
 
   redis:
     image: redis:latest
