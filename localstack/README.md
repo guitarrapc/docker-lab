@@ -1,3 +1,19 @@
+# Getting started
+
+```
+$ cd localstack
+
+# launch localstack
+$ docker compose up -d
+
+# create queue via terraform
+$ terraform init
+$ terraform apply
+
+# operate sqs via aws cli
+$ ./sqs.sh
+```
+
 # AWS Credentials
 
 .aws/config

@@ -1,3 +1,7 @@
 .redis/
 vendor/
 node_modules/
+
+.terraform/
+.terraform.lock.hcl
+terraform.tfstate*
