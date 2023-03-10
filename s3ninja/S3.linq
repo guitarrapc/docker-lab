@@ -12,6 +12,8 @@
 async Task Main()
 {
     var bucketName = "my-bucket";
+
+    // For S3ninja
     var credentials = new Amazon.Runtime.BasicAWSCredentials("AKIAIOSFODNN7EXAMPLE", "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY");
     var client = new Amazon.S3.AmazonS3Client(credentials, new AmazonS3Config
     {
