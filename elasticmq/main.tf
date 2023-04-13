@@ -22,10 +22,10 @@ provider "aws" {
 }
 
 resource "aws_sqs_queue" "test" {
-  name                       = "test-queue"
-  delay_seconds              = 0
-  max_message_size           = 256 * 1024        # max 262144kb
-  message_retention_seconds  = 60 * 60 * 24 * 14 # max 14 days
+  name          = "test-queue"
+  delay_seconds = 0
+  # max_message_size           = 256 * 1024        # max 262144kb
+  # message_retention_seconds  = 60 * 60 * 24 * 14 # max 14 days
   receive_wait_time_seconds  = 0
   visibility_timeout_seconds = 30
 }
