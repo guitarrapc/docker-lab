@@ -28,6 +28,11 @@
   > spublish sbar 1
   ```
 
+5. Stop Redis-Cluster
+  ```sh
+  docker compose down
+  ```
+
 # More detail
 
 see: https://hub.docker.com/r/bitnami/redis-cluster/ for more detail.

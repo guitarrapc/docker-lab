@@ -1,0 +1,6 @@
+services:
+services:
+  httpd:
+    image: docker.io/library/httpd
+    ports:
+      - 8080:80
