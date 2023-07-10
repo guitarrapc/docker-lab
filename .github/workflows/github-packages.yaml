@@ -43,7 +43,7 @@ jobs:
       - uses: guitarrapc/actions/.github/actions/to-lower@main
         id: lower
         with:
-          project: ${{ matrix.project }}
+          value: ${{ matrix.project }}
 
       # docker push (auto using buildkit)
       - name: Log in to the Container registry
@@ -64,8 +64,8 @@ jobs:
         with:
           context: .
           push: ${{ env.DOCKER_PUSH_ENABLED == 'true' }}
-          tags: latest-${{ matrix.tag }}-${{ steps.lower.outputs.project }}
-          labels: ${{ matrix.project }} == 'true' }}
+          tags: latest-${{ matrix.tag }}-${{ steps.lower.outputs.value }}
+          labels: ${{ matrix.project }}
 
       - name: Build and push Docker image (tag)
         uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
@@ -73,5 +73,5 @@ jobs:
           context: .
           file: ${{ matrix.dockerfile }}
           push: ${{ env.DOCKER_PUSH_ENABLED == 'true' }}
-          tags: ${{ steps.sha.outputs.sha-short }}-${{ matrix.tag }}-${{ steps.lower.outputs.project }}
+          tags: ${{ steps.sha.outputs.sha-short }}-${{ matrix.tag }}-${{ steps.lower.outputs.value }}
           labels: ${{ matrix.project }}
