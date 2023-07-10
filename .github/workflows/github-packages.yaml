@@ -33,7 +33,7 @@ jobs:
         include:
           - project: helloworld
             context: ./github_packages/csharp/
-            dockerfile: ./helloworld/Dockerfile
+            dockerfile: helloworld/Dockerfile
             tag: csharp-helloworld
     runs-on: ubuntu-latest
     timeout-minutes: 10
