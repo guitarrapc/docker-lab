@@ -63,7 +63,7 @@ jobs:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
           push: ${{ env.DOCKER_PUSH_ENABLED == 'true' }}
-          tags: latest-${{ matrix.tag }}-${{ steps.lower.outputs.value }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-${{ matrix.tag }}-${{ steps.lower.outputs.value }}
           labels: ${{ matrix.project }}
 
       - name: Build and push Docker image (tag)
@@ -72,5 +72,5 @@ jobs:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
           push: ${{ env.DOCKER_PUSH_ENABLED == 'true' }}
-          tags: ${{ steps.sha.outputs.sha-short }}-${{ matrix.tag }}-${{ steps.lower.outputs.value }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.sha.outputs.sha-short }}-${{ matrix.tag }}-${{ steps.lower.outputs.value }}
           labels: ${{ matrix.project }}
