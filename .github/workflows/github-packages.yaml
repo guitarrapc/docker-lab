@@ -32,7 +32,8 @@ jobs:
       matrix:
         include:
           - project: helloworld
-            dockerfile: ./github_packages/csharp/helloworld/Dockerfile
+            context: ./github_packages/csharp/
+            dockerfile: ./helloworld/Dockerfile
             tag: csharp-helloworld
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -62,7 +63,7 @@ jobs:
       - name: Build and push Docker image (latest)
         uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
         with:
-          context: .
+          context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
           push: ${{ env.DOCKER_PUSH_ENABLED == 'true' }}
           tags: latest-${{ matrix.tag }}-${{ steps.lower.outputs.value }}
@@ -71,7 +72,7 @@ jobs:
       - name: Build and push Docker image (tag)
         uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
         with:
-          context: .
+          context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
           push: ${{ env.DOCKER_PUSH_ENABLED == 'true' }}
           tags: ${{ steps.sha.outputs.sha-short }}-${{ matrix.tag }}-${{ steps.lower.outputs.value }}
