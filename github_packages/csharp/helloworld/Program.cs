@@ -1,4 +1,5 @@
 const string MESSAGE = """
+
   Hello from Docker!
   This message shows that your installation appears to be working correctly.
 
