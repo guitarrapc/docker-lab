@@ -19,5 +19,6 @@ const string MESSAGE = """
 
   For more examples and ideas, visit:
    https://docs.docker.com/get-started/
+
   """;
 Console.WriteLine(MESSAGE);
