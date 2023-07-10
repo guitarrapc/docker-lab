@@ -28,8 +28,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - project: helloworld
-            context: ./github_packages/csharp/
+          - context: ./github_packages/csharp/
             dockerfile: ./github_packages/csharp/helloworld/Dockerfile
             tag: csharp-helloworld
     runs-on: ubuntu-latest
@@ -41,7 +40,7 @@ jobs:
       - uses: guitarrapc/actions/.github/actions/to-lower@main
         id: lower
         with:
-          value: ${{ matrix.project }}
+          value: ${{ matrix.tag }}
 
       # docker push (auto using buildkit)
       - name: Log in to the Container registry
@@ -63,8 +62,8 @@ jobs:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
           push: ${{ env.DOCKER_PUSH_ENABLED == 'true' }}
-          tags: latest-${{ matrix.tag }}-${{ steps.lower.outputs.value }}
-          labels: ${{ matrix.project }}
+          tags: ${{ steps.meta.outputs.tags }}-latest-${{ matrix.tag }}
+          labels: ${{ steps.meta.outputs.labels }}
 
       - name: Build and push Docker image (tag)
         uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
@@ -72,5 +71,5 @@ jobs:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
           push: ${{ env.DOCKER_PUSH_ENABLED == 'true' }}
-          tags: ${{ steps.sha.outputs.sha-short }}-${{ matrix.tag }}-${{ steps.lower.outputs.value }}
-          labels: ${{ matrix.project }}
+          tags: ${{ steps.meta.outputs.tags }}-${{ steps.sha.outputs.sha-short }}-${{ matrix.tag }}
+          labels: ${{ steps.meta.outputs.labels }}
