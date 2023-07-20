@@ -67,17 +67,17 @@ private async Task<T?> GetJsonObjectContentAsync<T>(GetObjectResponse response)
     try
     {
         await response.ResponseStream.ReadAsync(rentBuffer, 0, itemSize);
+        if (rentBuffer.Length > response.ContentLength)
+        {
+            return JsonSerializer.Deserialize<T>(rentBuffer.AsSpan().Slice(0, (int)response.ContentLength));
+        }
+        else
+        {
+            return JsonSerializer.Deserialize<T>(rentBuffer.AsSpan());
+        }
     }
     finally
     {
         ArrayPool<byte>.Shared.Return(rentBuffer);
-    }
-    if (rentBuffer.Length > response.ContentLength)
-    {
-        return JsonSerializer.Deserialize<T>(rentBuffer.AsSpan().Slice(0, (int)response.ContentLength));
-    }
-    else
-    {
-        return JsonSerializer.Deserialize<T>(rentBuffer.AsSpan());
     }
 }
