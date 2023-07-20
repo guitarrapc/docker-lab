@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-export ENDPOINT_URL=http://localhost:4566
+export ENDPOINT_URL=http://localhost:9324
 export AWS_PROFILE=localstack
 export QUEUE_NAME=foo-queue
 

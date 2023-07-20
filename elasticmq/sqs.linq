@@ -25,7 +25,7 @@ async Task Main()
     var client = new Amazon.SQS.AmazonSQSClient(credentials, new AmazonSQSConfig
     {
         AuthenticationRegion = "ap-northeast-1",
-        ServiceURL = "http://localhost:4566"
+        ServiceURL = "http://localhost:9324"
     });
 
     try
@@ -41,8 +41,8 @@ async Task Main()
         queues.Dump();
         /*
         QueueUrls	List<String> (6 items)•••
-            http://localhost:4566/000000000000/my-queue
-            http://localhost:4566/000000000000/my-deadletter-queue
+            http://localhost:9324/000000000000/my-queue
+            http://localhost:9324/000000000000/my-deadletter-queue
         */
 
         // get queue url
@@ -50,7 +50,7 @@ async Task Main()
         var queue = await client.GetQueueUrlAsync(queueName, cts.Token);
         queue.Dump();
         /*
-            QueueUrl	http://localhost:4566/000000000000/my-queue
+            QueueUrl	http://localhost:9324/000000000000/my-queue
         */
 
         // set queue info
