@@ -1,0 +1,2 @@
+user test on >password123 ~* &* +@all
+user dev on ~* &* -@all +@pubsub +@read +@write +echo +info >foo

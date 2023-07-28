@@ -1,0 +1,13 @@
+# Community edition cannot persist data. If you need to persist data, please consider upgrading to the Pro edition.
+
+# ref: https://github.com/localstack/localstack/blob/master/docker-compose.yml
+# * ENV    https://docs.localstack.cloud/references/configuration/
+# * VOLUME https://docs.localstack.cloud/references/filesystem/
+services:
+  elasticmq:
+    image: softwaremill/elasticmq:1.3.14
+    ports:
+      - "9324:9324" # REST SQS API
+      - "9325:9325" # UI
+    volumes:
+      - "./confs/custom.conf:/opt/elasticmq.conf"
