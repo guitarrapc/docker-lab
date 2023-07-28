@@ -1,6 +1,0 @@
-services:
-  composer:
-    build: .
-    command: ["make", "install"]
-    volumes:
-      - ./app:/app
