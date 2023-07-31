@@ -19,12 +19,13 @@ async Task Main()
 
     var queueName = "my-queue";
     var dlqName = "my-deadletter-queue";
+    var region = "ap-northeast-1";
 
     // for LocalStack
     var credentials = new Amazon.Runtime.BasicAWSCredentials("test", "test");
     var client = new Amazon.SQS.AmazonSQSClient(credentials, new AmazonSQSConfig
     {
-        AuthenticationRegion = "ap-northeast-1",
+        AuthenticationRegion = region,
         ServiceURL = "http://localhost:4566"
     });
 
