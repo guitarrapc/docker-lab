@@ -25,6 +25,7 @@ async Task Main()
     Func<int, string> messageFactory = i => $$"""
     {
         "Index": {{i}},
+        "DateTime": {{DateTime.UtcNow}},
         "ID": {{Guid.NewGuid()}}
     }
     """;
@@ -41,7 +42,7 @@ async Task Main()
     try
     {
         // create queue
-        Console.WriteLine("Create Queues");
+        Console.WriteLine("Create queues");
         {
             var queues = await client.ListQueuesAsync(new ListQueuesRequest(), cts.Token);
             if (queues.QueueUrls.FirstOrDefault(x => string.Equals(x, queueName, StringComparison.OrdinalIgnoreCase)) is null)
@@ -55,7 +56,7 @@ async Task Main()
         }
 
         // list queue name
-        Console.WriteLine("List Queues");
+        Console.WriteLine("List queues");
         {
             var queues = await client.ListQueuesAsync(new ListQueuesRequest(), cts.Token);
             queues.Dump();
@@ -67,7 +68,7 @@ async Task Main()
         }
 
         // get queue url
-        Console.WriteLine("Get Queue");
+        Console.WriteLine("Get queue");
         var queue = await client.GetQueueUrlAsync(queueName, cts.Token);
         queueUrl = queue.QueueUrl;
         queue.Dump();
@@ -76,7 +77,7 @@ async Task Main()
         */
 
         // set queue info
-        Console.WriteLine("Set Queue attributes");
+        Console.WriteLine("Set queue attributes");
         {
             await client.SetQueueAttributesAsync(queue.QueueUrl, new Dictionary<string, string>
             {
@@ -89,7 +90,7 @@ async Task Main()
         }
 
         // get queue info
-        Console.WriteLine("Get Queue attributes");
+        Console.WriteLine("Get queue attributes");
         {
             var attributes = await client.GetQueueAttributesAsync(queue.QueueUrl, new List<string> { "All" }, cts.Token);
             attributes.Dump();
@@ -103,30 +104,41 @@ async Task Main()
                 var i = 0;
                 while (!cts.IsCancellationRequested)
                 {
-                    await client.SendMessageAsync(queue.QueueUrl, messageFactory(i++));
+                    await client.SendMessageAsync(queue.QueueUrl, messageFactory(i++), cts.Token);
+                    await client.SendMessageBatchAsync(queue.QueueUrl, Enumerable.Range(i, Random.Shared.Next(1, 10)).Select(x => new SendMessageBatchRequestEntry
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        MessageBody = messageFactory(i++),
+                    }).ToList(), cts.Token);
+                    await Task.Delay(TimeSpan.FromMicroseconds(Random.Shared.Next(1, 50)));
                 }
             }, cts.Token).ConfigureAwait(false);
         }
 
         // execute message and delete it.
-        Console.WriteLine("Handle messages");
+        Console.WriteLine("Read and handle messages");
         while (!cts.IsCancellationRequested)
         {
             // receive message
-            var receive = await client.ReceiveMessageAsync(queue.QueueUrl, cts.Token);
+            var receive = await client.ReceiveMessageAsync(new ReceiveMessageRequest
+            {
+                QueueUrl = queue.QueueUrl,
+                MaxNumberOfMessages = 10,
+            }, cts.Token);
 
             // no item check
             if (receive.Messages.Count == 0)
                 continue;
 
-            // any execution....
+            var begin = Stopwatch.GetTimestamp();
             foreach (var item in receive.Messages)
             {
-                item.Dump("receive");
+                // do any execution...
+                await Task.Delay(TimeSpan.FromMilliseconds(Random.Shared.Next(1, 5)));
             }
 
             // delete message
-            Console.WriteLine("Delete Messages");
+            Console.WriteLine($"Delete {receive.Messages.Count} messages. ({((double)(Stopwatch.GetTimestamp() - begin) / Stopwatch.Frequency * 1000).ToString("#.##")}ms)");
             await client.DeleteMessageBatchAsync(queue.QueueUrl, receive.Messages.Select(x => new Amazon.SQS.Model.DeleteMessageBatchRequestEntry
             {
                 Id = x.MessageId,
@@ -137,14 +149,14 @@ async Task Main()
     }
     catch (TaskCanceledException)
     {
-        Console.WriteLine("cancelled");
+        Console.WriteLine("Cancelled");
     }
     finally
     {
         // purge messages
         if (queueUrl is not null)
         {
-            Console.WriteLine("Purge Messages");
+            Console.WriteLine("Purge messages");
             await client.PurgeQueueAsync(queueUrl);
         }
     }
