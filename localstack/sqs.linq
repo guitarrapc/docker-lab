@@ -104,16 +104,30 @@ async Task Main()
                 var i = 0;
                 while (!cts.IsCancellationRequested)
                 {
-                    await client.SendMessageAsync(queue.QueueUrl, messageFactory(i++), cts.Token);
-                    await client.SendMessageBatchAsync(queue.QueueUrl, Enumerable.Range(i, Random.Shared.Next(1, 10)).Select(x => new SendMessageBatchRequestEntry
+                    var items = Enumerable.Range(i, Random.Shared.Next(1, 10));
+                    // single
+                    await client.SendMessageAsync(queue.QueueUrl, messageFactory(Interlocked.Increment(ref i)), cts.Token);
+                    
+                    // batch (max 10 messages)
+                    await client.SendMessageBatchAsync(queue.QueueUrl, items.Select(x => new SendMessageBatchRequestEntry
                     {
                         Id = Guid.NewGuid().ToString(),
-                        MessageBody = messageFactory(i++),
+                        MessageBody = messageFactory(Interlocked.Increment(ref i)),
                     }).ToList(), cts.Token);
-                    await Task.Delay(TimeSpan.FromMicroseconds(Random.Shared.Next(1, 50)));
+                    
+                    Console.WriteLine($"Sent {items.Count() + 1} messages");
+                                        
+                    await Task.Delay(TimeSpan.FromMicroseconds(Random.Shared.Next(1, 100)));
                 }
             }, cts.Token).ConfigureAwait(false);
         }
+        /*
+        {
+            "Index": 1,
+            "DateTime": 2023/08/01 11:48:15,
+            "ID": 54c7a3cc-4ca4-40f8-9ffd-0ed92e09b53c
+        }
+        */
 
         // execute message and delete it.
         Console.WriteLine("Read and handle messages");
@@ -123,8 +137,9 @@ async Task Main()
             var receive = await client.ReceiveMessageAsync(new ReceiveMessageRequest
             {
                 QueueUrl = queue.QueueUrl,
-                MaxNumberOfMessages = 10,
+                MaxNumberOfMessages = 10, // recieve 10 messages at once. max 10
             }, cts.Token);
+            
 
             // no item check
             if (receive.Messages.Count == 0)
