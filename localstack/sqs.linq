@@ -5,6 +5,7 @@
   <Namespace>Amazon.SQS</Namespace>
   <Namespace>System.Threading.Tasks</Namespace>
   <Namespace>Amazon.SQS.Model</Namespace>
+  <Namespace>System.Text.Json</Namespace>
 </Query>
 
 async Task Main()
@@ -17,18 +18,13 @@ async Task Main()
         Console.ReadLine();
         cts.Cancel();
         cts.Dispose();
-    }).ConfigureAwait(false);
+    });
 
     var queueName = "my-queue";
     var dlqName = "my-deadletter-queue";
     var region = "ap-northeast-1";
-    Func<int, string> messageFactory = i => $$"""
-    {
-        "Index": {{i}},
-        "DateTime": {{DateTime.UtcNow}},
-        "ID": {{Guid.NewGuid()}}
-    }
-    """;
+    var verbose = false; // output more dumps.
+    string CreateMessage(int index) => new Message(index).ToJsonLine();
 
     // for LocalStack
     var credentials = new Amazon.Runtime.BasicAWSCredentials("test", "test");
@@ -106,18 +102,18 @@ async Task Main()
                 {
                     var items = Enumerable.Range(i, Random.Shared.Next(1, 10));
                     // single
-                    await client.SendMessageAsync(queue.QueueUrl, messageFactory(Interlocked.Increment(ref i)), cts.Token);
+                    await client.SendMessageAsync(queue.QueueUrl, CreateMessage(Interlocked.Increment(ref i)), cts.Token);
                     
                     // batch (max 10 messages)
                     await client.SendMessageBatchAsync(queue.QueueUrl, items.Select(x => new SendMessageBatchRequestEntry
                     {
                         Id = Guid.NewGuid().ToString(),
-                        MessageBody = messageFactory(Interlocked.Increment(ref i)),
+                        MessageBody = CreateMessage(Interlocked.Increment(ref i)),
                     }).ToList(), cts.Token);
                     
                     Console.WriteLine($"Sent {items.Count() + 1} messages");
                                         
-                    await Task.Delay(TimeSpan.FromMicroseconds(Random.Shared.Next(1, 100)));
+                    await Task.Delay(TimeSpan.FromMicroseconds(Random.Shared.Next(1, 100)), cts.Token);
                 }
             }, cts.Token).ConfigureAwait(false);
         }
@@ -149,7 +145,13 @@ async Task Main()
             foreach (var item in receive.Messages)
             {
                 // do any execution...
-                await Task.Delay(TimeSpan.FromMilliseconds(Random.Shared.Next(1, 5)));
+                await Task.Delay(TimeSpan.FromMilliseconds(Random.Shared.Next(1, 5)), cts.Token);
+
+                if (verbose)
+                {
+                    // show contents
+                    item.Body.Dump();
+                }
             }
 
             // delete message
@@ -174,5 +176,19 @@ async Task Main()
             Console.WriteLine("Purge messages");
             await client.PurgeQueueAsync(queueUrl);
         }
+    }
+}
+
+public class Message
+{
+    public int Index { get; init; }
+    public string DateTime { get; init; } = System.DateTime.UtcNow.ToString();
+    public string Id { get; init; } = Guid.NewGuid().ToString();
+
+    public Message(int index) => Index = index;
+
+    public string ToJsonLine()
+    {
+        return JsonSerializer.Serialize(this) + "\n";
     }
 }
