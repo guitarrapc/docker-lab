@@ -76,9 +76,10 @@ async Task Main()
                 }
                 """,
             }, cts.Token);
-            var iamPolicy = await iamClient.CreatePolicyAsync(new CreatePolicyRequest
+            await iamClient.PutRolePolicyAsync(new PutRolePolicyRequest
             {
-                PolicyName = "firehose-execution-policy",
+                RoleName = iamRoleName,
+                PolicyName = "firehose-s3-delivery-policy",
                 PolicyDocument = $$"""
                 {
                     "Statement": [
@@ -103,12 +104,6 @@ async Task Main()
                 }
                 """,
             }, cts.Token);
-            await iamClient.AttachRolePolicyAsync(new AttachRolePolicyRequest
-            {
-                RoleName = iamRoleName,
-                PolicyArn = iamPolicy.Policy.Arn,
-            }, cts.Token);
-            iamRoleArn = iamRole.Role.Arn;
         }
 
         // create bucket
@@ -286,19 +281,19 @@ async Task Main()
 public async Task ReadS3ObjectAsync(AmazonS3Client client, IReadOnlyList<S3Object> s3Objects, CancellationToken ct)
 {
     // too heavy to do serial.
-    await Parallel.ForEachAsync(s3Objects, new ParallelOptions {MaxDegreeOfParallelism = 6, CancellationToken = ct}, async (source, cancellationToken) =>
+    await Parallel.ForEachAsync(s3Objects, new ParallelOptions { MaxDegreeOfParallelism = 6, CancellationToken = ct }, async (source, cancellationToken) =>
     {
         var s3Object = await client.GetObjectAsync(new GetObjectRequest
         {
             BucketName = source.BucketName,
             Key = source.Key,
         }, ct);
-        
+
         using (var reader = new StreamReader(s3Object.ResponseStream))
         {
             var content = await reader.ReadToEndAsync();
             content.Dump(source.Key);
-        }        
+        }
     });
 }
 
@@ -306,7 +301,7 @@ public class Message
 {
     public int Index { get; init; }
     public string DateTime { get; init; } = System.DateTime.UtcNow.ToString();
-    public string Id { get; init;} = Guid.NewGuid().ToString();
+    public string Id { get; init; } = Guid.NewGuid().ToString();
 
     public Message(int index) => Index = index;
 
