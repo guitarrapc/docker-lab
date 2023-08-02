@@ -10,4 +10,4 @@ services:
       - "127.0.0.1:4566:4566"            # LocalStack Gateway
       - "127.0.0.1:4510-4559:4510-4559"  # external services port range
     volumes:
-      - "./docker-entrypoint-initaws.d/:/etc/localstack/init/ready.d/" # localstack 2.0 changed initialization hook. see: https://docs.localstack.cloud/references/init-hooks/
+      - "./localstack/ready.d/:/etc/localstack/init/ready.d/" # localstack 2.0 changed initialization hook. see: https://docs.localstack.cloud/references/init-hooks/
