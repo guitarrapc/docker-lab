@@ -9,6 +9,7 @@
   <Namespace>System.Threading.Tasks</Namespace>
   <Namespace>Amazon.IdentityManagement</Namespace>
   <Namespace>Amazon.IdentityManagement.Model</Namespace>
+  <Namespace>System.Text.Json</Namespace>
 </Query>
 
 async Task Main()
@@ -27,13 +28,8 @@ async Task Main()
     var bucketName = "my-bucket";
     var deliveryStreamName = "my-delivery";
     var region = "ap-northeast-1";
-    Func<int, string> messageFactory = i => $$"""
-    {
-        "Index": {{i}},
-        "DateTime": {{DateTime.UtcNow}},
-        "ID": {{Guid.NewGuid()}}
-    }
-    """;
+    var verbose = false; // output more dumps.
+    string CreateMessage(int index) => new Message(index).ToJsonLine();
 
     // for LocalStack
     var credentials = new Amazon.Runtime.BasicAWSCredentials("test", "test");
@@ -56,7 +52,7 @@ async Task Main()
     try
     {
         // create iam role
-        Console.WriteLine("Create Firehose Role");
+        Console.WriteLine("Create IamRole");
         var roles = await iamClient.ListRolesAsync(cts.Token);
         var iamRoleArn = roles.Roles.FirstOrDefault(x => string.Equals(x.RoleName, iamRoleName, StringComparison.OrdinalIgnoreCase))?.Arn;
         if (iamRoleArn is null)
@@ -141,14 +137,15 @@ async Task Main()
                 ExtendedS3DestinationConfiguration = new ExtendedS3DestinationConfiguration
                 {
                     BucketARN = $"arn:aws:s3:::{bucketName}",
+                    // Currently Bufferhinsts not respected. see: https://github.com/localstack/localstack/issues/7024
                     BufferingHints = new BufferingHints
                     {
-                        IntervalInSeconds = 300, // 300s is recommended
-                        SizeInMBs = 5, // 5MB is recommended.
+                        IntervalInSeconds = 300, // default 300s
+                        SizeInMBs = 5, // default 5MB
                     },
                     CompressionFormat = Amazon.KinesisFirehose.CompressionFormat.GZIP,
                     RoleARN = iamRoleArn,
-                }
+                },
             }, cts.Token);
         }
         // arn:aws:firehose:ap-northeast-1:000000000000:deliverystream/my-delivery
@@ -188,10 +185,10 @@ async Task Main()
                 var records = new List<Record>();
                 while (!cts.IsCancellationRequested)
                 {
-                    var items = Enumerable.Range(i, Random.Shared.Next(50, 100));
+                    var items = Enumerable.Range(i, Random.Shared.Next(10, 200));
 
                     // single
-                    var message = messageFactory(Interlocked.Increment(ref i));
+                    var message = CreateMessage(Interlocked.Increment(ref i));
                     using (var data = new MemoryStream(Encoding.UTF8.GetBytes(message)))
                     {
                         await firehoseClient.PutRecordAsync(new PutRecordRequest
@@ -203,7 +200,7 @@ async Task Main()
                     // batch
                     foreach (var item in items)
                     {
-                        var m = messageFactory(Interlocked.Increment(ref i));
+                        var m = CreateMessage(Interlocked.Increment(ref i));
                         using (var data = new MemoryStream(Encoding.UTF8.GetBytes(m)))
                         {
                             records.Add(new Record { Data = data });
@@ -269,10 +266,15 @@ async Task Main()
                 // do any execution...
                 size += s3Object.Size;
             }
+            if (verbose)
+            {
+                // show contents
+                await ReadS3ObjectAsync(s3Client, insertedObjects, cts.Token);
+            }
 
-            Console.WriteLine($"Delivered {insertedObjects.Count} objects. Total {size}bytes.");
+            Console.WriteLine($"Delivered S3Objects:{insertedObjects.Count}, TotalBytes: {size}, LoopCount: {readLoopCount}");
 
-            await Task.Delay(TimeSpan.FromMilliseconds(10 * 1000));
+            await Task.Delay(TimeSpan.FromMilliseconds(10 * 1000), cts.Token);
         }
     }
     catch (TaskCanceledException)
@@ -281,3 +283,35 @@ async Task Main()
     }
 }
 
+public async Task ReadS3ObjectAsync(AmazonS3Client client, IReadOnlyList<S3Object> s3Objects, CancellationToken ct)
+{
+    // too heavy to do serial.
+    await Parallel.ForEachAsync(s3Objects, new ParallelOptions {MaxDegreeOfParallelism = 6, CancellationToken = ct}, async (source, cancellationToken) =>
+    {
+        var s3Object = await client.GetObjectAsync(new GetObjectRequest
+        {
+            BucketName = source.BucketName,
+            Key = source.Key,
+        }, ct);
+        
+        using (var reader = new StreamReader(s3Object.ResponseStream))
+        {
+            var content = await reader.ReadToEndAsync();
+            content.Dump(source.Key);
+        }        
+    });
+}
+
+public class Message
+{
+    public int Index { get; init; }
+    public string DateTime { get; init; } = System.DateTime.UtcNow.ToString();
+    public string Id { get; init;} = Guid.NewGuid().ToString();
+
+    public Message(int index) => Index = index;
+
+    public string ToJsonLine()
+    {
+        return JsonSerializer.Serialize(this) + "\n";
+    }
+}
