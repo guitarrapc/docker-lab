@@ -1,17 +1,4 @@
-# Community edition cannot persist data. If you need to persist data, please consider upgrading to the Pro edition.
-
-# ref: https://github.com/localstack/localstack/blob/master/docker-compose.yml
-# * ENV    https://docs.localstack.cloud/references/configuration/
-# * VOLUME https://docs.localstack.cloud/references/filesystem/
 services:
-  localstack:
-    image: localstack/localstack:2.2.0
-    ports:
-      - "127.0.0.1:4566:4566"            # LocalStack Gateway
-      - "127.0.0.1:4510-4559:4510-4559"  # external services port range
-    volumes:
-      - "./localstack/ready.d/:/etc/localstack/init/ready.d/" # localstack 2.0 changed initialization hook. see: https://docs.localstack.cloud/references/init-hooks/
-
   fluentbit:
     # `debug-` tag enable /bin/bash to use
     image: public.ecr.aws/aws-observability/aws-for-fluent-bit:debug-2.31.12 # image include firehose.so and others.: https://gallery.ecr.aws/aws-observability/aws-for-fluent-bit
@@ -34,6 +21,18 @@ services:
     volumes:
       - "./envoy/envoy.yaml:/etc/envoy/envoy.yaml"
       - "envoy:/var/log/envoy/" # share log folder
+
+  # Community edition cannot persist data. If you need to persist data, please consider upgrading to the Pro edition.
+  # ref: https://github.com/localstack/localstack/blob/master/docker-compose.yml
+  # * ENV    https://docs.localstack.cloud/references/configuration/
+  # * VOLUME https://docs.localstack.cloud/references/filesystem/
+  localstack:
+    image: localstack/localstack:2.2.0
+    ports:
+      - "127.0.0.1:4566:4566"            # LocalStack Gateway
+      - "127.0.0.1:4510-4559:4510-4559"  # external services port range
+    volumes:
+      - "./localstack/ready.d/:/etc/localstack/init/ready.d/" # localstack 2.0 changed initialization hook. see: https://docs.localstack.cloud/references/init-hooks/
 
 volumes:
   envoy:
