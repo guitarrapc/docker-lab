@@ -5,7 +5,7 @@ services:
     ports:
       - "127.0.0.1:2020:2020"
     environment:
-      - AWS_ACCESS_KEY_ID=test
+      - AWS_ACCESS_KEY_ID=test # localstack default credentials
       - AWS_SECRET_ACCESS_KEY=test
     volumes:
       - "./fluent-bit/envoy/:/fluent-bit/etc/"
