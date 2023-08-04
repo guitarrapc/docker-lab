@@ -1,0 +1,9 @@
+FROM ubuntu:22.04
+
+RUN set -x \
+  && apt update \
+  && apt install -y --no-install-recommends libcap2-bin procps
+
+COPY ./entrypoint.sh /entrypoint.sh
+
+ENTRYPOINT [/entrypoint.sh]

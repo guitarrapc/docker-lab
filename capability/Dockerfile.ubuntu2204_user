@@ -1,0 +1,20 @@
+FROM ubuntu:22.04
+
+RUN set -x \
+  && apt update \
+  && apt install -y --no-install-recommends libcap2-bin procps
+
+RUN set -x \
+  && apt install -y --no-install-recommends sudo \
+  && echo "foo ALL=NOPASSWD:/usr/bin/chmod" >> /etc/sudoers.d/foo \
+  && chmod 440 /etc/sudoers.d/foo
+
+# Add a user to drop permission
+RUN set -x \
+  && groupadd --gid 101 foo \
+  && useradd --gid 101 --uid 101 foo --shell /bin/bash --create-home
+USER foo
+
+COPY ./entrypoint.sh /entrypoint.sh
+
+ENTRYPOINT [/entrypoint.sh]

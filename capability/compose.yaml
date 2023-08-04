@@ -1,0 +1,31 @@
+services:
+  ubuntu2204:
+    build:
+      context: .
+      dockerfile: Dockerfile.ubuntu2204
+    entrypoint: ["/bin/bash", "/entrypoint.sh"]
+    volumes:
+      - "./entrypoint.sh:/entrypoint.sh"
+
+  ubuntu2204_cap:
+    build:
+      context: .
+      dockerfile: Dockerfile.ubuntu2204
+    entrypoint: ["/bin/bash", "/entrypoint.sh"]
+    cap_drop:
+      - "all" # root user can drop all capabilities
+    volumes:
+      - "./entrypoint.sh:/entrypoint.sh"
+
+  ubuntu2204_cap_user:
+    build:
+      context: .
+      dockerfile: Dockerfile.ubuntu2204_user
+    entrypoint: ["/bin/bash", "/entrypoint.sh"]
+    cap_add:
+      [cap_setgid,cap_setuid,cap_audit_write]
+      # [cap_chown,cap_dac_override,cap_fowner,cap_fsetid,cap_kill,cap_setgid,cap_setuid,cap_setpcap,cap_net_bind_service,cap_net_raw,cap_sys_chroot,cap_mknod,cap_audit_write,cap_setfcap]
+    cap_drop:
+      - "all"
+    volumes:
+      - "./entrypoint.sh:/entrypoint.sh"
