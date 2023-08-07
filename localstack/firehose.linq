@@ -171,6 +171,40 @@ async Task Main()
         DeliveryStreamNames	my-delivery
         */
 
+        // describe firehose stream
+        Console.WriteLine("Describe DeliveryStreams");
+        var deliverystream = await firehoseClient.DescribeDeliveryStreamAsync(new DescribeDeliveryStreamRequest
+        {
+            DeliveryStreamName = deliveryStreamName,
+        }, cts.Token);
+        deliverystream.Dump();
+        /*
+        {
+            "DeliveryStreamDescription": {
+                "DeliveryStreamName": "my-delivery",
+                "DeliveryStreamARN": "arn:aws:firehose:ap-northeast-1:000000000000:deliverystream/my-delivery",
+                "DeliveryStreamStatus": "ACTIVE",
+                "DeliveryStreamType": "DirectPut",
+                "VersionId": "1",
+                "CreateTimestamp": 1691372439.783361,
+                "Destinations": [
+                    {
+                        "DestinationId": "e913a48a",
+                        "ExtendedS3DestinationDescription": {
+                            "BucketARN": "arn:aws:s3:::my-bucket",
+                            "BufferingHints": {
+                                "SizeInMBs": 5,
+                                "IntervalInSeconds": 300
+                            },
+                            "CompressionFormat": "GZIP"
+                        }
+                    }
+                ],
+                "HasMoreDestinations": false
+            }
+        }
+        */
+
         // send message
         Console.WriteLine("Send messages");
         {
