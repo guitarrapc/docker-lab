@@ -166,7 +166,7 @@ async Task Main()
                                     new ProcessorParameter
                                     {
                                         ParameterName = Amazon.KinesisFirehose.ProcessorParameterName.MetadataExtractionQuery,
-                                        // {data_type: .data_type, time: .created_at | strptime("%Y/%m/%d %H:%M:%S") | (mktime + (60 * 60 * 9))} | {data_type: .data_type, year: .time | strftime("%Y"), month: .time | strftime("%m"), day: .time | strftime("%d"), hour: .time | strftime("%H")}
+                                        
                                         ParameterValue = "{"
                                         + "data_type: .data_type,"
                                         + "year: (.created_at | strptime(\"%Y/%m/%d %H:%M:%S\") | mktime + (60 * 60 * 9) | strftime(\"%Y\")),"
