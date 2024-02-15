@@ -40,8 +40,7 @@ subgraph fluent-bit container
 end
 
 subgraph localstack container
-  firehose["Amazon Kinesis Firehose"]
-  s3["S3"]
+  cloudwatchlogs["Amazon CloudWatch Logs"]
 end
 
 envoy --host volume share--> fluentbit
