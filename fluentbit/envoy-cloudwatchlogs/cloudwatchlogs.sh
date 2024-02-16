@@ -14,8 +14,9 @@ aws --endpoint-url=${ENDPOINT_URL} logs describe-log-groups --region "${region}"
 # get streams
 echo "------------"
 echo "Get streams from CloudWatch Logs"
-streams=$(aws --endpoint-url=${ENDPOINT_URL} logs describe-log-streams --log-group-name "${loggroup_name}" --region "${region}" --output text)
-for object in ${objects}; do
-    content=$(aws --endpoint-url=${ENDPOINT_URL} s3 cp "s3://${BUCKET_NAME}/${object}" -)
-    echo -e "~~~~~~~~~~~~~~~\nkey => ${object}, object => ${content}"
-done
+aws --endpoint-url=${ENDPOINT_URL} logs describe-log-streams --log-group-name "${loggroup_name}" --region "${region}" --output text
+
+# tail logs
+echo "------------"
+echo "Tail logs from CloudWatch Logs"
+aws --endpoint-url=${ENDPOINT_URL} logs tail "${loggroup_name}" --region "${region}"
